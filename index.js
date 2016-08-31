@@ -5,28 +5,35 @@ var fs = require('fs');
 var URL = 'http://substack.net/images/'
 
 request(URL, (error, response, body) => {
-  if (!error && response.statusCode == 200) {
-    
-    var $ = cheerio.load(body);
-    var data = [];
-
-    $('tr').each(function(i,elem){
-      var permissions = $(this).children().first().text();
-      var absUrl = URL + $(this).children().last().text();
-      var fileType = "dir";
-      if (!permissions.includes("d")) {
-        fileType = $(this).children().last().text().split('.').pop();
-      }
-      data[i] = permissions + ',' + absUrl + ',' + fileType;
-    })
-    
-
-    fs.writeFile('./data.CSV', data.join('\n'), err => {
-      if (err) {
-        return console.log(err);
-      }
-      console.log("file was saved")
-    });
+  if (!error) {
+    var data = scrape(body);  
+    dataToCSV(data);   
   }
-})
+});
+
+function scrape(text){
+  var data = [];
+  var $ = cheerio.load(text);
+
+  $('tr').each(function(i,elem){
+    var permissions = $(this).children().first().text();
+    var absUrl = URL + $(this).children().last().text();
+    var fileType = "dir";
+    if (!permissions.includes("d")) {
+      fileType = $(this).children().last().text().split('.').pop();
+    }
+    data[i] = permissions + ',' + absUrl + ',' + fileType;
+  });
+  return data;
+}
+
+function dataToCSV(data){
+  fs.writeFile('./data.CSV', data.join('\n'), err => {
+    if (err) {
+      console.log('error');
+    }
+    console.log("file was saved");
+  });
+}
+
 
